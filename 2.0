@@ -1,5 +1,5 @@
 -- [[ PARRA NINJA HUB - RED & BLACK ELITE FULL EDITION 👑 ]]
-local CLAVE_CORRECTA = "PARRAHUD"
+local CLAVE_CORRECTA = "papadeacusado"
 local Players = game:GetService("Players")
 local L_Plr = Players.LocalPlayer
 local RunService = game:GetService("RunService")
