@@ -1,0 +1,174 @@
+-- // MASHMELLOW-PARRA-HUB - RAYFIELD UI + ANTI-DETECTION //
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+    Name = "Mashmellow-hub",
+    LoadingTitle = "Cargando Mashmellow Hub...",
+    LoadingSubtitle = "by Parra",
+    ConfigurationSaving = {
+        Enabled = true,
+        FolderName = "MashmellowHub",
+        FileName = "Config"
+    },
+    Discord = "",
+    KeySystem = true,
+    KeySettings = {
+        Title = "🔑 Key System",
+        Subtitle = "Mashmellow Hub",
+        Note = "AUTOFARM-PREMIUM-PA-MI👑",
+        FileName = "MashmellowKey",
+        SaveKey = true,
+        GrabKeyFromSite = false,
+        Key = "MKS-ON-TOP"
+    }
+})
+
+-- ==================== ANTI-DETECTION LAYER ====================
+local AntiDetection = {}
+
+-- Hook básico de Namecall (anti-check común)
+local mt = getrawmetatable(game)
+local oldNamecall = mt.__namecall
+setreadonly(mt, false)
+
+mt.__namecall = newcclosure(function(self, ...)
+    local method = getnamecallmethod()
+    local args = {...}
+    
+    -- Bloquea algunos checks comunes de anti-cheat
+    if method == "FireServer" then
+        if args[1] and typeof(args[1]) == "string" then
+            local arg1 = string.lower(args[1])
+            if arg1:find("ban") or arg1:find("kick") or arg1:find("report") or arg1:find("detect") then
+                return wait(9e9) -- Silent drop
+            end
+        end
+    end
+    
+    -- Anti teleport detection (hace el CFrame más "natural")
+    if method == "SetPrimaryPartCFrame" or method == "LoadCharacter" then
+        if AntiDetection.IsTeleporting then
+            task.wait(math.random(15,35)/1000) -- micro delay humanizado
+        end
+    end
+    
+    return oldNamecall(self, ...)
+end)
+
+setreadonly(mt, true)
+
+-- Anti idle kick + heartbeat spoof
+AntiDetection.AntiAFK = function()
+    task.spawn(function()
+        while task.wait(math.random(30,60)) do
+            pcall(function()
+                game:GetService("VirtualUser"):Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+                task.wait(0.1)
+                game:GetService("VirtualUser"):Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+            end)
+        end
+    end)
+end
+
+AntiDetection.AntiAFK()
+
+-- ==================== TABS ====================
+local CombatTab = Window:CreateTab("FARM", 4483362458)
+local MiscTab = Window:CreateTab("TELEPOR", 4483362458)
+
+-- ==================== FARM ====================
+CombatTab:CreateToggle({
+    Name = "CARGAR-FARM",
+    CurrentValue = false,
+    Flag = "CARGAR-FARM_Toggle",
+    Callback = function(Value)
+        if Value then
+            pcall(function()
+                -- Pequeño delay random antes de cargar para no ser tan obvio
+                task.wait(math.random(8,20)/10)
+                loadstring(game:HttpGet("https://github.com/angi92ortiz-boop/Polic-a-de-tr-nsito-de-la-ciudad-de-guadakajara/raw/refs/heads/main/Polic%C3%ADa%20de%20guadalajara"))()
+            end)
+            Rayfield:Notify({
+                Title = "CARGAR-FARM",
+                Content = "Cargado correctamente (Stealth Mode)",
+                Duration = 3,
+                Image = 4483362458
+            })
+        end
+    end
+})
+
+-- ==================== TELEPORTS ====================
+MiscTab:CreateSection("Teleports de Motos / Vehículos")
+
+MiscTab:CreateParagraph({
+    Title = "⚠️ ATENTO A ESTO",
+    Content = "Debes estar sentado en una moto o no funciona ."
+})
+
+local locations = {
+    ["Ubicación 1"]  = Vector3.new(519.27, 3.59, 606.96),
+    ["Ubicación 2"]  = Vector3.new(741.76, 3.71, 433.77),
+    ["Ubicación 3"]  = Vector3.new(217.39, 3.74, -174.63),
+    ["Ubicación 4"]  = Vector3.new(85.18, 3.76, 38.44),
+    ["Ubicación 5"]  = Vector3.new(1016.60, 3.61, -327.68),
+    ["Ubicación 6"]  = Vector3.new(1213.24, 3.36, -47.72),
+    ["Ubicación 7"]  = Vector3.new(1140.63, 10.11, 421.04),
+    ["Ubicación 8"]  = Vector3.new(-463.24, 3.86, 358.16),
+    ["Ubicación 9"]  = Vector3.new(985.76, 10.11, 248.31),
+    ["Ubicación 10"] = Vector3.new(925.26, 10.11, 40.25),
+    ["Ubicación 11"] = Vector3.new(896.53, 10.11, 41.55),
+    ["Ubicación 12"] = Vector3.new(-473.69, 3.86, -460.23),
+    ["Ubicación 13"] = Vector3.new(-769.51, 3.66, -179.22),
+}
+
+for name, pos in pairs(locations) do
+    MiscTab:CreateButton({
+        Name = name,
+        Callback = function()
+            local player = game.Players.LocalPlayer
+            local character = player.Character or player.CharacterAdded:Wait()
+            local humanoid = character:FindFirstChild("Humanoid")
+            local rootpart = character:FindFirstChild("HumanoidRootPart")
+            
+            if not (humanoid and rootpart) then return end
+            
+            if humanoid.SeatPart then
+                AntiDetection.IsTeleporting = true
+                
+                -- Teleport más humano (con tween-like random)
+                local targetCFrame = CFrame.new(pos + Vector3.new(0, 5 + math.random(1,3), 0))
+                
+                task.spawn(function()
+                    for i = 1, math.random(3,6) do
+                        rootpart.CFrame = rootpart.CFrame:Lerp(targetCFrame, i/math.random(4,8))
+                        task.wait(math.random(5,12)/100)
+                    end
+                    rootpart.CFrame = targetCFrame
+                    AntiDetection.IsTeleporting = false
+                end)
+                
+                Rayfield:Notify({
+                    Title = "Teletransportado",
+                    Content = "✅ " .. name .. " (Stealth)",
+                    Duration = 2.5,
+                    Image = 4483362458
+                })
+            else
+                Rayfield:Notify({
+                    Title = "Error",
+                    Content = "❌ Debes estar montado en una moto ",
+                    Duration = 4
+                })
+            end
+        end
+    })
+end
+
+-- Final
+Rayfield:Notify({
+    Title = "Mashmellow-parra",
+    Content = "Cargado correctamente con Anti-Detection\nPresiona RightShift para abrir",
+    Duration = 6,
+    Image = 4483362458
+})
