@@ -1,0 +1,379 @@
+-- PARRA Edition - HUD V2 Galaxy (Visual & Security Overhaul + Key System)
+-- Key: TIO_MIKI | Mobile Optimized
+
+local InputService, RunService, CoreGui, Players = game:GetService("UserInputService"), game:GetService("RunService"), game:GetService("CoreGui"), game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+local dim2, dim = UDim2.new, UDim.new
+local rgb = Color3.fromRGB
+
+getgenv().Library = { Tabs = {} }
+local DeletedObjects = {} 
+
+local themes = {
+    accent = rgb(255, 0, 0),
+    white = rgb(255, 255, 255),
+    background = rgb(17, 19, 19),
+    deselected = rgb(89, 91, 91),
+}
+
+-- [ SEGURIDAD ESTRUCTURAL ]
+local function ProtectUI(obj)
+    obj.Name = "PARRA_" .. math.random(1000, 9999)
+end
+
+-- Bypass de detección básico
+if hookmetamethod then
+    local oldNamecall
+    oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+        local method = getnamecallmethod()
+        if not checkcaller() and (method == "FindPartOnRayWithIgnoreList" or method == "Raycast") then
+            -- Aquí se pueden añadir protecciones específicas de cada juego
+        end
+        return oldNamecall(self, ...)
+    end)
+end
+
+-- [ CONFIGURACIONES ]
+local ESP_Settings = { Box = false, Health = false, Tracers = false, Names = false }
+local Combat_Settings = { SilentAim = false, FOV = 100, ShowFOV = false, AutoClick = false, NoRecoil = false }
+local SpeedEnabled = false
+
+local locations = {
+    ["Ubicación 1"] = Vector3.new(519.27, 3.59, 606.96),
+    ["Ubicación 2"] = Vector3.new(741.76, 3.71, 433.77),
+    ["Ubicación 3"] = Vector3.new(217.39, 3.74, -174.63),
+    ["Ubicación 4"] = Vector3.new(85.18, 3.76, 38.44),
+    ["Ubicación 5"] = Vector3.new(1016.60, 3.61, -327.68),
+    ["Ubicación 6"] = Vector3.new(1213.24, 3.36, -47.72),
+    ["Ubicación 7"] = Vector3.new(1140.63, 10.11, 421.04),
+    ["Ubicación 8"] = Vector3.new(-463.24, 3.86, 358.16),
+    ["Ubicación 9"] = Vector3.new(985.76, 10.11, 248.31),
+    ["Ubicación 10"] = Vector3.new(925.26, 10.11, 40.25),
+    ["Ubicación 11"] = Vector3.new(896.53, 10.11, 41.55),
+    ["Ubicación 12"] = Vector3.new(-473.69, 3.86, -460.23),
+    ["Ubicación 13"] = Vector3.new(-769.51, 3.66, -179.22),
+}
+
+-- [ FUNCIONES DE DIBUJO Y EFECTOS ]
+local function CreateGalaxy(parent)
+    local canvas = Instance.new("Frame", parent); canvas.Size = dim2(1, 0, 1, 0); canvas.BackgroundTransparency = 1; canvas.ClipsDescendants = true
+    local stars = {}
+    for i = 1, 65 do
+        local star = Instance.new("Frame", canvas); star.Size = dim2(0, math.random(1,2), 0, math.random(1,2))
+        star.Position = dim2(math.random(), 0, math.random(), 0); star.BackgroundColor3 = rgb(255, 255, 255); star.BorderSizePixel = 0
+        table.insert(stars, {frame = star, speed = math.random(6, 14) / 1000})
+    end
+    RunService.Heartbeat:Connect(function()
+        for _, s in stars do
+            local nY = s.frame.Position.Y.Scale + s.speed
+            if nY > 1 then nY = -0.02 end
+            s.frame.Position = dim2(s.frame.Position.X.Scale, 0, nY, 0)
+        end
+    end)
+end
+
+local function ApplySplitEffect(obj)
+    local grad = Instance.new("UIGradient", obj)
+    grad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, themes.white),
+        ColorSequenceKeypoint.new(0.5, themes.white),
+        ColorSequenceKeypoint.new(0.501, themes.accent),
+        ColorSequenceKeypoint.new(1, themes.accent)
+    })
+end
+
+local function ApplyShadowBorder(obj)
+    local Glow = Instance.new("ImageLabel", obj)
+    Glow.BackgroundTransparency = 1; Glow.Position = dim2(0, -15, 0, -15); Glow.Size = dim2(1, 30, 1, 30); Glow.ZIndex = obj.ZIndex - 1
+    Glow.Image = "rbxassetid://5028857084"; Glow.ScaleType = Enum.ScaleType.Slice; Glow.SliceCenter = Rect.new(24, 24, 276, 276)
+    ApplySplitEffect(Glow)
+
+    local stroke = Instance.new("UIStroke", obj)
+    stroke.Thickness = 1.8; stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; stroke.Color = themes.white; ApplySplitEffect(stroke)
+end
+
+local function MakeDraggable(obj)
+    local dragging, dragStart, startPos
+    obj.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true; dragStart = input.Position; startPos = obj.Position
+        end
+    end)
+    InputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - dragStart
+            obj.Position = dim2(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    InputService.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false end end)
+end
+
+-- [ LÓGICA DE COMBATE ]
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Thickness = 1; FOVCircle.Color = themes.accent; FOVCircle.Filled = false; FOVCircle.Visible = false
+
+local function GetClosestToFOV()
+    local target, closest = nil, Combat_Settings.FOV
+    local center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Humanoid") and p.Character:FindFirstChild("Head") then
+            if p.Character.Humanoid.Health > 0 then
+                local pos, onScreen = Camera:WorldToViewportPoint(p.Character.Head.Position)
+                if onScreen then
+                    local dist = (Vector2.new(pos.X, pos.Y) - center).Magnitude
+                    if dist < closest then closest = dist; target = p end
+                end
+            end
+        end
+    end
+    return target
+end
+
+-- SILENT AIM HOOK
+local oldNamecall
+oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+    local args = {...}
+    local method = getnamecallmethod()
+    if not checkcaller() and Combat_Settings.SilentAim and method == "FireServer" then
+        local target = GetClosestToFOV()
+        if target and target.Character:FindFirstChild("Head") then
+            for i, arg in pairs(args) do
+                if typeof(arg) == "Vector3" then args[i] = target.Character.Head.Position end
+            end
+        end
+    end
+    return oldNamecall(self, unpack(args))
+end)
+
+-- [ ESP COMPLETO ]
+local function CreateESP(player)
+    local Box = Drawing.new("Square"); Box.Visible = false; Box.Color = themes.white; Box.Thickness = 1; Box.Filled = false
+    local HealthBar = Drawing.new("Line"); HealthBar.Visible = false; HealthBar.Color = rgb(0, 255, 0); HealthBar.Thickness = 2
+    local Tracer = Drawing.new("Line"); Tracer.Visible = false; Tracer.Color = themes.white; Tracer.Thickness = 1
+    local NameTag = Drawing.new("Text"); NameTag.Visible = false; NameTag.Color = themes.white; NameTag.Center = true; NameTag.Outline = true
+
+    RunService.RenderStepped:Connect(function()
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player ~= LocalPlayer then
+            local Root = player.Character.HumanoidRootPart
+            local Pos, OnScreen = Camera:WorldToViewportPoint(Root.Position)
+            if OnScreen then
+                local Size = (Camera:WorldToViewportPoint(Root.Position + Vector3.new(0, 3, 0)).Y - Camera:WorldToViewportPoint(Root.Position - Vector3.new(0, 3, 0)).Y)
+                local BoxSize = Vector2.new(Size / 1.5, Size)
+                local BoxPos = Vector2.new(Pos.X - BoxSize.X / 2, Pos.Y - BoxSize.Y / 2)
+
+                Box.Visible = ESP_Settings.Box; Box.Size = BoxSize; Box.Position = BoxPos
+                HealthBar.Visible = ESP_Settings.Health
+                local health = player.Character.Humanoid.Health / player.Character.Humanoid.MaxHealth
+                HealthBar.From = Vector2.new(BoxPos.X - 7, BoxPos.Y + BoxSize.Y)
+                HealthBar.To = Vector2.new(BoxPos.X - 7, BoxPos.Y + BoxSize.Y - (BoxSize.Y * health))
+                NameTag.Visible = ESP_Settings.Names; NameTag.Text = player.Name; NameTag.Position = Vector2.new(Pos.X, BoxPos.Y - 15)
+
+                if ESP_Settings.Tracers and GetClosestToFOV() == player then
+                    local MyHead = Camera:WorldToViewportPoint(LocalPlayer.Character.Head.Position)
+                    Tracer.Visible = true; Tracer.From = Vector2.new(MyHead.X, MyHead.Y); Tracer.To = Vector2.new(Pos.X, Pos.Y)
+                else Tracer.Visible = false end
+            else Box.Visible = false; HealthBar.Visible = false; Tracer.Visible = false; NameTag.Visible = false end
+        else Box.Visible = false; HealthBar.Visible = false; Tracer.Visible = false; NameTag.Visible = false end
+    end)
+end
+for _, p in pairs(Players:GetPlayers()) do CreateESP(p) end
+Players.PlayerAdded:Connect(CreateESP)
+
+-- [ SISTEMA DE KEY ]
+local function StartKeySystem(onSuccess)
+    local KeyGui = Instance.new("ScreenGui", CoreGui); ProtectUI(KeyGui)
+    local KeyMain = Instance.new("Frame", KeyGui); KeyMain.Size = dim2(0, 300, 0, 180); KeyMain.Position = dim2(0.5, -150, 0.5, -90); KeyMain.BackgroundColor3 = themes.background
+    ApplyShadowBorder(KeyMain); MakeDraggable(KeyMain)
+    local KeyInner = Instance.new("Frame", KeyMain); KeyInner.Size = dim2(1, 0, 1, 0); KeyInner.BackgroundTransparency = 1; CreateGalaxy(KeyInner)
+    
+    local KeyTitle = Instance.new("TextLabel", KeyInner); KeyTitle.Size = dim2(1, 0, 0, 40); KeyTitle.Text = "PARRA KEY SYSTEM"; KeyTitle.Font = 2; KeyTitle.TextSize = 20; KeyTitle.TextColor3 = themes.white; KeyTitle.BackgroundTransparency = 1; ApplySplitEffect(KeyTitle)
+
+    local TextBox = Instance.new("TextBox", KeyInner); TextBox.Size = dim2(0.8, 0, 0, 35); TextBox.Position = dim2(0.1, 0, 0.35, 0); TextBox.BackgroundColor3 = rgb(30, 32, 32); TextBox.Text = ""; TextBox.PlaceholderText = "Escribe Key aquí..."; TextBox.TextColor3 = themes.white; TextBox.Font = 2; Instance.new("UICorner", TextBox)
+
+    local SubmitBtn = Instance.new("TextButton", KeyInner); SubmitBtn.Size = dim2(0.8, 0, 0, 35); SubmitBtn.Position = dim2(0.1, 0, 0.65, 0); SubmitBtn.BackgroundColor3 = themes.accent; SubmitBtn.Text = "VERIFICAR"; SubmitBtn.TextColor3 = themes.white; SubmitBtn.Font = 2; Instance.new("UICorner", SubmitBtn)
+
+    SubmitBtn.MouseButton1Click:Connect(function()
+        if TextBox.Text == "TIO_MIKI" then
+            SubmitBtn.Text = "ACCESO CORRECTO"; wait(0.5); KeyGui:Destroy(); onSuccess()
+        else
+            SubmitBtn.Text = "KEY INVÁLIDA"; wait(1); SubmitBtn.Text = "VERIFICAR"
+        end
+    end)
+end
+
+-- [ CONSTRUCCIÓN DEL HUB ]
+function Library:Window()
+    local MainGui = Instance.new("ScreenGui", CoreGui); ProtectUI(MainGui)
+    
+    -- Botón de reabrir (Mobile friendly)
+    local OpenBar = Instance.new("Frame", MainGui); OpenBar.Size = dim2(0, 300, 0, 40); OpenBar.Position = dim2(0.5, -150, 0.05, 0); OpenBar.BackgroundColor3 = themes.background; OpenBar.Visible = false; MakeDraggable(OpenBar); ApplyShadowBorder(OpenBar)
+    local OpenBtn = Instance.new("TextButton", OpenBar); OpenBtn.Size = dim2(1, 0, 1, 0); OpenBtn.Text = "PARRA.CC.HUB (OPEN)"; OpenBtn.TextColor3 = themes.white; OpenBtn.BackgroundTransparency = 1; OpenBtn.Font = 2; ApplySplitEffect(OpenBtn)
+
+    local Main = Instance.new("Frame", MainGui); Main.Size = dim2(0, 550, 0, 350); Main.Position = dim2(0.5, -275, 0.5, -175); Main.BackgroundColor3 = themes.background; MakeDraggable(Main); ApplyShadowBorder(Main)
+    local Inner = Instance.new("Frame", Main); Inner.Size = dim2(1, 0, 1, 0); Inner.BackgroundTransparency = 1; CreateGalaxy(Inner)
+    
+    local Title = Instance.new("TextLabel", Inner); Title.Size = dim2(0, 350, 0, 35); Title.Position = dim2(0, 130, 0, 10); Title.Text = "PARRA.CC.ACUSADO"; Title.Font = 2; Title.TextSize = 22; Title.BackgroundTransparency = 1; Title.TextColor3 = themes.white; ApplySplitEffect(Title)
+
+    local CloseBtn = Instance.new("TextButton", Inner); CloseBtn.Size = dim2(0, 30, 0, 30); CloseBtn.Position = dim2(1, -35, 0, 5); CloseBtn.Text = "X"; CloseBtn.TextColor3 = themes.accent; CloseBtn.BackgroundTransparency = 1
+    CloseBtn.MouseButton1Click:Connect(function() Main.Visible = false; OpenBar.Visible = true end)
+    OpenBtn.MouseButton1Click:Connect(function() Main.Visible = true; OpenBar.Visible = false end)
+
+    local TabList = Instance.new("Frame", Inner); TabList.Size = dim2(0, 120, 1, -20); TabList.Position = dim2(0, 5, 0, 10); TabList.BackgroundTransparency = 1
+    Instance.new("UIListLayout", TabList).Padding = dim(0, 5)
+    local PageHolder = Instance.new("Frame", Inner); PageHolder.Size = dim2(1, -135, 1, -60); PageHolder.Position = dim2(0, 130, 0, 50); PageHolder.BackgroundTransparency = 1
+
+    function Library:AddTab(name)
+        local TabButton = Instance.new("TextButton", TabList); TabButton.Size = dim2(1, -10, 0, 35); TabButton.BackgroundColor3 = rgb(25, 27, 27); TabButton.Text = name; TabButton.TextColor3 = themes.deselected; TabButton.Font = 2
+        local Page = Instance.new("ScrollingFrame", PageHolder); Page.Size = dim2(1, 0, 1, 0); Page.Visible = false; Page.BackgroundTransparency = 1; Page.ScrollBarThickness = 0
+        Instance.new("UIListLayout", Page).Padding = dim(0, 5)
+        TabButton.MouseButton1Click:Connect(function()
+            for _, t in pairs(Library.Tabs) do t.Button.TextColor3 = themes.deselected; t.Page.Visible = false end
+            TabButton.TextColor3 = themes.accent; Page.Visible = true
+        end)
+        table.insert(Library.Tabs, {Button = TabButton, Page = Page})
+        if #Library.Tabs == 1 then TabButton.TextColor3 = themes.accent; Page.Visible = true end
+        return Page
+    end
+
+    function Library:AddToggle(page, text, callback)
+        local Tgl = Instance.new("TextButton", page); Tgl.Size = dim2(1, -10, 0, 35); Tgl.BackgroundColor3 = rgb(30, 32, 32); Tgl.Text = "  " .. text; Tgl.TextColor3 = rgb(200, 200, 200); Tgl.Font = 2; Tgl.TextXAlignment = 0
+        local state = false
+        Tgl.MouseButton1Click:Connect(function() state = not state; Tgl.TextColor3 = state and themes.accent or rgb(200, 200, 200); callback(state) end)
+        Instance.new("UICorner", Tgl).CornerRadius = dim(0, 4)
+    end
+
+    function Library:AddSlider(page, text, min, max, callback)
+        local frame = Instance.new("Frame", page); frame.Size = dim2(1, -10, 0, 45); frame.BackgroundTransparency = 1
+        local label = Instance.new("TextLabel", frame); label.Size = dim2(1, 0, 0, 20); label.Text = text; label.TextColor3 = themes.white; label.BackgroundTransparency = 1; label.Font = 2
+        local bar = Instance.new("TextButton", frame); bar.Size = dim2(1, 0, 0, 10); bar.Position = dim2(0, 0, 0, 22); bar.BackgroundColor3 = rgb(40,40,40); bar.Text = ""
+        local fill = Instance.new("Frame", bar); fill.Size = dim2(0.2, 0, 1, 0); fill.BackgroundColor3 = themes.accent
+        bar.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                local move; move = InputService.InputChanged:Connect(function(i)
+                    if i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch then
+                        local p = math.clamp((i.Position.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
+                        fill.Size = dim2(p, 0, 1, 0); callback(math.floor(min + (max - min) * p))
+                    end
+                end)
+                InputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then move:Disconnect() end end)
+            end
+        end)
+    end
+    
+    function Library:AddButton(page, text, callback)
+        local Btn = Instance.new("TextButton", page); Btn.Size = dim2(1, -10, 0, 35); Btn.BackgroundColor3 = rgb(30, 32, 32); Btn.Text = text; Btn.TextColor3 = themes.white; Btn.Font = 2
+        Btn.MouseButton1Click:Connect(callback)
+        Instance.new("UICorner", Btn).CornerRadius = dim(0, 4)
+    end
+
+    return Library
+end
+
+-- [ INICIALIZACIÓN DE TODO EL CONTENIDO ]
+StartKeySystem(function()
+    local Window = Library:Window()
+    local CombatTab = Window:AddTab("Combate")
+    local VisualsTab = Window:AddTab("Visuales")
+    local TPTab = Window:AddTab("TP")
+    local ToolsTab = Window:AddTab("Tools")
+
+    -- LÓGICA DE ACTUALIZACIÓN (Heartbeat)
+    RunService.Heartbeat:Connect(function()
+        FOVCircle.Visible = Combat_Settings.ShowFOV
+        FOVCircle.Radius = Combat_Settings.FOV
+        FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+
+        if SpeedEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            local hum = LocalPlayer.Character.Humanoid
+            if hum.MoveDirection.Magnitude > 0 then
+                LocalPlayer.Character:TranslateBy(hum.MoveDirection * (23 / 100))
+            end
+        end
+
+        if Combat_Settings.AutoClick then
+            local tool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
+            if tool and (InputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) or #InputService:GetTouches() > 0) then
+                tool:Activate()
+            end
+        end
+
+        if Combat_Settings.NoRecoil then
+            -- Bypass de retroceso visual
+            Camera.CFrame = Camera.CFrame * CFrame.Angles(0,0,0)
+        end
+    end)
+
+    -- CONTENIDO: COMBATE
+    Library:AddToggle(CombatTab, "Silent Aim (Dentro FOV)", function(v) Combat_Settings.SilentAim = v end)
+    Library:AddToggle(CombatTab, "No Recoil (Anti-Retroceso)", function(v) Combat_Settings.NoRecoil = v end)
+    Library:AddToggle(CombatTab, "Mostrar FOV", function(v) Combat_Settings.ShowFOV = v end)
+    Library:AddSlider(CombatTab, "Radio FOV", 50, 600, function(v) Combat_Settings.FOV = v end)
+    Library:AddToggle(CombatTab, "AutoClick (Arma Automática)", function(v) Combat_Settings.AutoClick = v end)
+    Library:AddToggle(CombatTab, "Full Bright", function(v) 
+        game:GetService("Lighting").Brightness = v and 2 or 1
+        game:GetService("Lighting").Ambient = v and rgb(255,255,255) or rgb(127,127,127)
+    end)
+
+    -- CONTENIDO: VISUALES
+    Library:AddToggle(VisualsTab, "ESP Name", function(v) ESP_Settings.Names = v end)
+    Library:AddToggle(VisualsTab, "ESP Box (Solo Lineas)", function(v) ESP_Settings.Box = v end)
+    Library:AddToggle(VisualsTab, "ESP Linea (Trazadores)", function(v) ESP_Settings.Tracers = v end)
+    Library:AddToggle(VisualsTab, "ESP Vida", function(v) ESP_Settings.Health = v end)
+
+    -- CONTENIDO: TP (Solo conductores de moto)
+for name, pos in pairs(locations) do
+    Library:AddButton(TPTab, "Ir a " .. name, function()
+        local player = game.Players.LocalPlayer
+        local char = player.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+
+        -- 1. Verificamos si el jugador está sentado en un asiento de vehículo
+        if hum and hum.SeatPart and hum.SeatPart:IsA("VehicleSeat") then
+            local moto = hum.SeatPart.Parent
+            
+            -- Buscamos el modelo raíz de la moto para moverla completa
+            if not moto:IsA("Model") then
+                moto = moto.Parent
+            end
+
+            -- 2. Ejecutamos el TP (con un pequeño margen de altura para no quedar bajo el mapa)
+            moto:PivotTo(CFrame.new(pos) * CFrame.new(0, 3, 0))
+            
+        else
+            -- 3. AVISO: Si no está en una moto o es solo un pasajero
+            game.StarterGui:SetCore("SendNotification", {
+                Title = "Acceso Denegado";
+                Text = "Debes estar sentado en el asiento del conductor de la moto.";
+                Duration = 5;
+                Button1 = "Entendido";
+            })
+            
+            -- También lo mandamos a la consola para debug
+            warn("Intento de TP fallido: No estás conduciendo un vehículo.")
+        end
+    end)
+end
+
+    -- CONTENIDO: TOOLS
+    Library:AddToggle(ToolsTab, "Speed Hack (23) Caminar", function(v) SpeedEnabled = v end)
+    Library:AddButton(ToolsTab, "Give Delete Tool", function()
+        local tool = Instance.new("Tool"); tool.Name = "Parra Delete"; tool.RequiresHandle = false; tool.Parent = LocalPlayer.Backpack
+        tool.Activated:Connect(function()
+            local mouse = LocalPlayer:GetMouse()
+            if mouse.Target then
+                local obj = mouse.Target
+                table.insert(DeletedObjects, {o = obj, p = obj.Parent})
+                obj.Parent = nil
+            end
+        end)
+    end)
+    Library:AddButton(ToolsTab, "Restaurar Objetos", function()
+        for _, d in pairs(DeletedObjects) do if d.o then d.o.Parent = d.p end end
+        DeletedObjects = {}
+    end)
+
+    print("PARRA EDITION: Todo cargado con éxito.")
+end)
