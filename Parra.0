@@ -1,0 +1,555 @@
+-- =============================================
+-- SOUTH BRONX AUTOFARM - HACKER EDITION v2.5
+-- SCRIPT REGALO PARA JOSTIN 👑
+-- Key: JOSTIN | Delete Tool: JOSTIN TOL
+-- =============================================
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local CORRECT_KEY = "JOSTIN"
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "SouthBronxRegaloJostin"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
+
+-- ==================== KEY GUI ====================
+local keyFrame = Instance.new("Frame")
+keyFrame.Size = UDim2.new(0, 340, 0, 210)
+keyFrame.Position = UDim2.new(0.5, -170, 0.35, 0)
+keyFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+keyFrame.BorderSizePixel = 0
+keyFrame.Parent = screenGui
+
+local keyCorner = Instance.new("UICorner")
+keyCorner.CornerRadius = UDim.new(0, 14)
+keyCorner.Parent = keyFrame
+
+local keyStroke = Instance.new("UIStroke")
+keyStroke.Color = Color3.fromRGB(255, 215, 0)
+keyStroke.Thickness = 2
+keyStroke.Parent = keyFrame
+
+local keyTitle = Instance.new("TextLabel")
+keyTitle.Size = UDim2.new(1, 0, 0, 50)
+keyTitle.BackgroundTransparency = 1
+keyTitle.Text = "KEY SYSTEM"
+keyTitle.TextColor3 = Color3.fromRGB(255, 215, 0)
+keyTitle.TextSize = 24
+keyTitle.Font = Enum.Font.Code
+keyTitle.Parent = keyFrame
+
+local keySubtitle = Instance.new("TextLabel")
+keySubtitle.Size = UDim2.new(1, 0, 0, 30)
+keySubtitle.Position = UDim2.new(0, 0, 0, 50)
+keySubtitle.BackgroundTransparency = 1
+keySubtitle.Text = "Ingresa la key"
+keySubtitle.TextColor3 = Color3.fromRGB(180, 180, 180)
+keySubtitle.TextSize = 16
+keySubtitle.Font = Enum.Font.Code
+keySubtitle.Parent = keyFrame
+
+local keyBox = Instance.new("TextBox")
+keyBox.Size = UDim2.new(0.85, 0, 0, 45)
+keyBox.Position = UDim2.new(0.075, 0, 0, 90)
+keyBox.PlaceholderText = "Escribe aquí..."
+keyBox.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+keyBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+keyBox.TextSize = 18
+keyBox.Font = Enum.Font.Code
+keyBox.Parent = keyFrame
+
+local keyBoxCorner = Instance.new("UICorner")
+keyBoxCorner.CornerRadius = UDim.new(0, 10)
+keyBoxCorner.Parent = keyBox
+
+local submitBtn = Instance.new("TextButton")
+submitBtn.Size = UDim2.new(0.85, 0, 0, 45)
+submitBtn.Position = UDim2.new(0.075, 0, 0, 145)
+submitBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
+submitBtn.Text = "VERIFICAR KEY"
+submitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+submitBtn.TextSize = 18
+submitBtn.Font = Enum.Font.Code
+submitBtn.Parent = keyFrame
+
+local submitCorner = Instance.new("UICorner")
+submitCorner.CornerRadius = UDim.new(0, 10)
+submitCorner.Parent = submitBtn
+
+local keyStatus = Instance.new("TextLabel")
+keyStatus.Size = UDim2.new(1, 0, 0, 25)
+keyStatus.Position = UDim2.new(0, 0, 1, -30)
+keyStatus.BackgroundTransparency = 1
+keyStatus.Text = ""
+keyStatus.TextColor3 = Color3.fromRGB(255, 100, 100)
+keyStatus.TextSize = 15
+keyStatus.Font = Enum.Font.Code
+keyStatus.Parent = keyFrame
+
+-- ==================== PANEL PRINCIPAL ====================
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainPanel"
+mainFrame.Size = UDim2.new(0, 440, 0, 550)
+mainFrame.Position = UDim2.new(0.5, -220, 0.12, 0)
+mainFrame.BackgroundColor3 = Color3.fromRGB(8, 8, 12)
+mainFrame.BorderSizePixel = 0
+mainFrame.Visible = false
+mainFrame.Active = true
+mainFrame.Draggable = true
+mainFrame.Parent = screenGui
+
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(0, 16)
+uiCorner.Parent = mainFrame
+
+local uiStroke = Instance.new("UIStroke")
+uiStroke.Color = Color3.fromRGB(255, 215, 0)
+uiStroke.Thickness = 2.5
+uiStroke.Parent = mainFrame
+
+-- ScrollingFrame
+local scrollingFrame = Instance.new("ScrollingFrame")
+scrollingFrame.Size = UDim2.new(1, -16, 1, -100)
+scrollingFrame.Position = UDim2.new(0, 8, 0, 78)
+scrollingFrame.BackgroundTransparency = 1
+scrollingFrame.ScrollBarThickness = 6
+scrollingFrame.ScrollBarImageColor3 = Color3.fromRGB(255, 215, 0)
+scrollingFrame.Parent = mainFrame
+
+local uiListLayout = Instance.new("UIListLayout")
+uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+uiListLayout.Padding = UDim.new(0, 12)
+uiListLayout.Parent = scrollingFrame
+
+local uiPadding = Instance.new("UIPadding")
+uiPadding.PaddingLeft = UDim.new(0, 8)
+uiPadding.PaddingRight = UDim.new(0, 8)
+uiPadding.PaddingTop = UDim.new(0, 8)
+uiPadding.Parent = scrollingFrame
+
+-- Bienvenida
+local bienvenidoLabel = Instance.new("TextLabel")
+bienvenidoLabel.Size = UDim2.new(1, -16, 0, 40)
+bienvenidoLabel.Position = UDim2.new(0, 8, 0, 8)
+bienvenidoLabel.BackgroundTransparency = 1
+bienvenidoLabel.Text = "BIENVENIDO A PARRA"
+bienvenidoLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
+bienvenidoLabel.TextSize = 24
+bienvenidoLabel.Font = Enum.Font.Code
+bienvenidoLabel.Parent = mainFrame
+
+local userLabel = Instance.new("TextLabel")
+userLabel.Size = UDim2.new(1, -16, 0, 28)
+userLabel.Position = UDim2.new(0, 8, 0, 46)
+userLabel.BackgroundTransparency = 1
+userLabel.Text = "Usuario: " .. player.Name
+userLabel.TextColor3 = Color3.fromRGB(200, 255, 200)
+userLabel.TextSize = 17
+userLabel.Font = Enum.Font.Code
+userLabel.Parent = mainFrame
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -16, 0, 30)
+title.Position = UDim2.new(0, 8, 0, 74)
+title.BackgroundTransparency = 1
+title.Text = "SCRIPT REGALO PARA JOSTIN 👑"
+title.TextColor3 = Color3.fromRGB(255, 215, 0)
+title.TextSize = 18
+title.Font = Enum.Font.Code
+title.Parent = mainFrame
+
+-- Cash Total
+local moneyLabel = Instance.new("TextLabel")
+moneyLabel.Size = UDim2.new(1, -16, 0, 42)
+moneyLabel.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+moneyLabel.Text = "CASH TOTAL: $0"
+moneyLabel.TextColor3 = Color3.fromRGB(0, 255, 120)
+moneyLabel.TextSize = 21
+moneyLabel.Font = Enum.Font.Code
+moneyLabel.Parent = scrollingFrame
+
+local moneyCorner = Instance.new("UICorner")
+moneyCorner.CornerRadius = UDim.new(0, 10)
+moneyCorner.Parent = moneyLabel
+
+-- Count Materiales
+local countTitle = Instance.new("TextLabel")
+countTitle.Size = UDim2.new(1, -16, 0, 30)
+countTitle.BackgroundTransparency = 1
+countTitle.Text = "COUNT MATERIALES"
+countTitle.TextColor3 = Color3.fromRGB(255, 215, 0)
+countTitle.TextSize = 18
+countTitle.Font = Enum.Font.Code
+countTitle.Parent = scrollingFrame
+
+local pequenaLabel = Instance.new("TextLabel")
+pequenaLabel.Size = UDim2.new(1, -16, 0, 30)
+pequenaLabel.BackgroundTransparency = 1
+pequenaLabel.Text = "Bolsa Pequeña: 0 ($1470)"
+pequenaLabel.TextColor3 = Color3.fromRGB(255, 240, 100)
+pequenaLabel.TextXAlignment = Enum.TextXAlignment.Left
+pequenaLabel.TextSize = 16
+pequenaLabel.Font = Enum.Font.Code
+pequenaLabel.Parent = scrollingFrame
+
+local medianaLabel = Instance.new("TextLabel")
+medianaLabel.Size = UDim2.new(1, -16, 0, 30)
+medianaLabel.BackgroundTransparency = 1
+medianaLabel.Text = "Bolsa Mediana: 0 ($2500)"
+medianaLabel.TextColor3 = Color3.fromRGB(255, 240, 100)
+medianaLabel.TextXAlignment = Enum.TextXAlignment.Left
+medianaLabel.TextSize = 16
+medianaLabel.Font = Enum.Font.Code
+medianaLabel.Parent = scrollingFrame
+
+local grandeLabel = Instance.new("TextLabel")
+grandeLabel.Size = UDim2.new(1, -16, 0, 30)
+grandeLabel.BackgroundTransparency = 1
+grandeLabel.Text = "Bolsa Grande: 0 ($4100)"
+grandeLabel.TextColor3 = Color3.fromRGB(255, 240, 100)
+grandeLabel.TextXAlignment = Enum.TextXAlignment.Left
+grandeLabel.TextSize = 16
+grandeLabel.Font = Enum.Font.Code
+grandeLabel.Parent = scrollingFrame
+
+-- Inventario
+local invTitle = Instance.new("TextLabel")
+invTitle.Size = UDim2.new(1, -16, 0, 30)
+invTitle.BackgroundTransparency = 1
+invTitle.Text = "INVENTARIO"
+invTitle.TextColor3 = Color3.fromRGB(120, 255, 120)
+invTitle.TextSize = 18
+invTitle.Font = Enum.Font.Code
+invTitle.Parent = scrollingFrame
+
+local aguaLabel = Instance.new("TextLabel")
+aguaLabel.Size = UDim2.new(1, -16, 0, 28)
+aguaLabel.BackgroundTransparency = 1
+aguaLabel.Text = "Agua: 0"
+aguaLabel.TextColor3 = Color3.fromRGB(180, 255, 255)
+aguaLabel.TextXAlignment = Enum.TextXAlignment.Left
+aguaLabel.TextSize = 16
+aguaLabel.Font = Enum.Font.Code
+aguaLabel.Parent = scrollingFrame
+
+local azucarLabel = Instance.new("TextLabel")
+azucarLabel.Size = UDim2.new(1, -16, 0, 28)
+azucarLabel.BackgroundTransparency = 1
+azucarLabel.Text = "Azúcar: 0"
+azucarLabel.TextColor3 = Color3.fromRGB(180, 255, 255)
+azucarLabel.TextXAlignment = Enum.TextXAlignment.Left
+azucarLabel.TextSize = 16
+azucarLabel.Font = Enum.Font.Code
+azucarLabel.Parent = scrollingFrame
+
+local gelatinaLabel = Instance.new("TextLabel")
+gelatinaLabel.Size = UDim2.new(1, -16, 0, 28)
+gelatinaLabel.BackgroundTransparency = 1
+gelatinaLabel.Text = "Gelatina: 0"
+gelatinaLabel.TextColor3 = Color3.fromRGB(180, 255, 255)
+gelatinaLabel.TextXAlignment = Enum.TextXAlignment.Left
+gelatinaLabel.TextSize = 16
+gelatinaLabel.Font = Enum.Font.Code
+gelatinaLabel.Parent = scrollingFrame
+
+-- Último producto
+local lastProductLabel = Instance.new("TextLabel")
+lastProductLabel.Size = UDim2.new(1, -16, 0, 38)
+lastProductLabel.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+lastProductLabel.Text = "ÚLTIMO PRODUCTO: ---"
+lastProductLabel.TextColor3 = Color3.fromRGB(255, 240, 100)
+lastProductLabel.TextSize = 16
+lastProductLabel.Font = Enum.Font.Code
+lastProductLabel.Parent = scrollingFrame
+
+local lastCorner = Instance.new("UICorner")
+lastCorner.CornerRadius = UDim.new(0, 10)
+lastCorner.Parent = lastProductLabel
+
+-- ==================== BOTÓN NUEVO: ACTIVAR DELETE ====================
+local deleteBtn = Instance.new("TextButton")
+deleteBtn.Size = UDim2.new(1, -16, 0, 55)
+deleteBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+deleteBtn.Text = "ACTIVAR DELETE (JOSTIN TOL)"
+deleteBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+deleteBtn.TextSize = 18
+deleteBtn.Font = Enum.Font.Code
+deleteBtn.Parent = scrollingFrame
+
+local deleteCorner = Instance.new("UICorner")
+deleteCorner.CornerRadius = UDim.new(0, 12)
+deleteCorner.Parent = deleteBtn
+
+-- Botones normales
+local autoItemBtn = Instance.new("TextButton")
+autoItemBtn.Size = UDim2.new(1, -16, 0, 52)
+autoItemBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+autoItemBtn.Text = "AUTO ITEM"
+autoItemBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+autoItemBtn.TextSize = 19
+autoItemBtn.Font = Enum.Font.Code
+autoItemBtn.Parent = scrollingFrame
+
+local farmeoBtn = Instance.new("TextButton")
+farmeoBtn.Size = UDim2.new(1, -16, 0, 52)
+farmeoBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
+farmeoBtn.Text = "FARME O: OFF"
+farmeoBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+farmeoBtn.TextSize = 19
+farmeoBtn.Font = Enum.Font.Code
+farmeoBtn.Parent = scrollingFrame
+
+-- Status
+local statusLabel = Instance.new("TextLabel")
+statusLabel.Size = UDim2.new(1, -20, 0, 40)
+statusLabel.Position = UDim2.new(0, 10, 1, -50)
+statusLabel.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+statusLabel.Text = "Anti-Ban: Activado"
+statusLabel.TextColor3 = Color3.fromRGB(0, 255, 120)
+statusLabel.TextSize = 16
+statusLabel.Font = Enum.Font.Code
+statusLabel.Parent = mainFrame
+
+local statusCorner = Instance.new("UICorner")
+statusCorner.CornerRadius = UDim.new(0, 10)
+statusCorner.Parent = statusLabel
+
+-- ==================== TOGGLE BUTTON ====================
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Name = "ToggleBtn"
+toggleBtn.Size = UDim2.new(0, 65, 0, 65)
+toggleBtn.Position = UDim2.new(0, 25, 0, 25)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
+toggleBtn.Text = "SB"
+toggleBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+toggleBtn.TextScaled = true
+toggleBtn.Font = Enum.Font.Code
+toggleBtn.Visible = false
+toggleBtn.Parent = screenGui
+
+local toggleCorner = Instance.new("UICorner")
+toggleCorner.CornerRadius = UDim.new(1, 0)
+toggleCorner.Parent = toggleBtn
+
+local toggleStroke = Instance.new("UIStroke")
+toggleStroke.Color = Color3.fromRGB(255, 255, 255)
+toggleStroke.Thickness = 3
+toggleStroke.Parent = toggleBtn
+
+-- ==================== JOSTIN TOL (DELETE + NOCLIP) ====================
+local function createJostinTol()
+    if player.Backpack:FindFirstChild("JOSTIN TOL") or (player.Character and player.Character:FindFirstChild("JOSTIN TOL")) then
+        print("JOSTIN TOL ya existe")
+        return
+    end
+
+    local tool = Instance.new("Tool")
+    tool.Name = "JOSTIN TOL"
+    tool.RequiresHandle = false
+    tool.Parent = player.Backpack
+
+    local noclipEnabled = false
+    local noclipConnection = nil
+
+    tool.Equipped:Connect(function()
+        print("✅ JOSTIN TOL equipado")
+        print("• Clic Izquierdo = Borrar objeto")
+        print("• Clic Derecho mantenido = Traspasar (Noclip)")
+
+        noclipConnection = game:GetService("RunService").RenderStepped:Connect(function()
+            if noclipEnabled and player.Character then
+                for _, part in ipairs(player.Character:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = false
+                    end
+                end
+            end
+        end)
+    end)
+
+    tool.Unequipped:Connect(function()
+        if noclipConnection then
+            noclipConnection:Disconnect()
+            noclipConnection = nil
+        end
+        -- Restaurar colisiones
+        if player.Character then
+            for _, part in ipairs(player.Character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = true
+                end
+            end
+        end
+        noclipEnabled = false
+    end)
+
+    -- Clic izquierdo = Borrar
+    tool.Activated:Connect(function()
+        local mouse = player:GetMouse()
+        local target = mouse.Target
+        if target and target.Parent and not target:IsA("Terrain") then
+            target:Destroy()
+            print("[JOSTIN TOL] Borrado → " .. target.Name)
+        end
+    end)
+
+    -- Clic derecho = Toggle Noclip
+    local mouse = player:GetMouse()
+    mouse.Button2Down:Connect(function()
+        if tool.Parent == player.Character then
+            noclipEnabled = not noclipEnabled
+            print("JOSTIN TOL Noclip: " .. (noclipEnabled and "ON" or "OFF"))
+        end
+    end)
+
+    print("✅ JOSTIN TOL creado y agregado al inventario")
+end
+
+-- ==================== BOTÓN ACTIVAR DELETE ====================
+deleteBtn.MouseButton1Click:Connect(function()
+    createJostinTol()
+    statusLabel.Text = "Anti-Ban: Activado | JOSTIN TOL activado"
+end)
+
+-- ==================== KEY VERIFICATION ====================
+local function verifyKey()
+    if keyBox.Text:upper() == CORRECT_KEY then
+        keyStatus.Text = "Key correcta ✓"
+        keyStatus.TextColor3 = Color3.fromRGB(0, 255, 100)
+        
+        task.wait(1)
+        keyFrame:Destroy()
+        
+        toggleBtn.Visible = true
+        mainFrame.Visible = true
+        statusLabel.Text = "Anti-Ban: Activado"
+        
+        print("✅ Panel cargado - Usa el botón 'ACTIVAR DELETE' para obtener JOSTIN TOL")
+    else
+        keyStatus.Text = "Key incorrecta"
+        keyStatus.TextColor3 = Color3.fromRGB(255, 80, 80)
+        keyBox.Text = ""
+    end
+end
+
+submitBtn.MouseButton1Click:Connect(verifyKey)
+keyBox.FocusLost:Connect(function(enter) if enter then verifyKey() end end)
+
+-- ==================== TOGGLE PANEL ====================
+local function togglePanel()
+    local isOpen = mainFrame.Visible
+    mainFrame.Visible = not isOpen
+    
+    if not isOpen then
+        statusLabel.Text = "Anti-Ban: Activado"
+        toggleBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+        toggleBtn.Text = "X"
+    else
+        toggleBtn.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
+        toggleBtn.Text = "SB"
+    end
+end
+
+toggleBtn.MouseButton1Click:Connect(togglePanel)
+
+-- Drag toggle
+local dragging = false
+local dragStart, startPos
+
+toggleBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = toggleBtn.Position
+    end
+end)
+
+toggleBtn.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        toggleBtn.Position = UDim2.new(0, startPos.X.Offset + delta.X, 0, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+toggleBtn.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+
+-- Auto ajustar scroll
+uiListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, uiListLayout.AbsoluteContentSize.Y + 60)
+end)
+
+-- ==================== FARM FUNCIONES ====================
+local farming = false
+local farmCoroutine = nil
+local totalCash = 0
+local lastMoney = 0
+
+local function updateMoney()
+    local leaderstats = player:FindFirstChild("leaderstats")
+    if leaderstats then
+        local stat = leaderstats:FindFirstChild("Cash") or leaderstats:FindFirstChild("Money") or leaderstats:FindFirstChild("Dinero")
+        if stat then
+            local current = stat.Value
+            local gained = current - lastMoney
+            if gained > 0 then
+                totalCash = totalCash + gained
+                moneyLabel.Text = "CASH TOTAL: $" .. totalCash
+            end
+            lastMoney = current
+        end
+    end
+end
+
+local function autoSelectItems()
+    statusLabel.Text = "Anti-Ban: Activado"
+    print("[AUTO ITEM] Ejecutado")
+end
+
+local function startFarming()
+    if farmCoroutine then return end
+    farming = true
+    farmeoBtn.Text = "FARME O: ON"
+    farmeoBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+    statusLabel.Text = "Anti-Ban: Activado"
+
+    farmCoroutine = task.spawn(function()
+        while farming do
+            updateMoney()
+            task.wait(1)
+        end
+    end)
+end
+
+local function stopFarming()
+    farming = false
+    if farmCoroutine then task.cancel(farmCoroutine) end
+    farmCoroutine = nil
+    farmeoBtn.Text = "FARME O: OFF"
+    farmeoBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
+    statusLabel.Text = "Anti-Ban: Activado"
+end
+
+autoItemBtn.MouseButton1Click:Connect(autoSelectItems)
+farmeoBtn.MouseButton1Click:Connect(function()
+    if farming then stopFarming() else startFarming() end
+end)
+
+-- Update loop
+task.spawn(function()
+    while task.wait(1) do
+        if mainFrame.Visible then
+            updateMoney()
+        end
+    end
+end)
+
+print("✅ v2.5 cargado correctamente")
+print("Key: JOSTIN")
+print("Nuevo botón 'ACTIVAR DELETE' agregado en el panel
